@@ -1,0 +1,19 @@
+{
+  "name": "ci-cd",
+  "version": "1.0.0",
+  "description": "A Node.js application demonstrating a CI/CD pipeline with Kubernetes and Docker",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest"
+  },
+  "keywords": ["CI/CD", "Node.js", "Kubernetes", "Docker", "GitHub Actions"],
+  "author": "Nagalakshmi",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
