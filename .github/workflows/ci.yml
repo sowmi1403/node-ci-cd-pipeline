@@ -1,0 +1,79 @@
+name: CI/CD Pipeline for Node.js Application
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # Job 1: Run tests 
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: npm test
+
+  # Job 2: Build Docker Image
+  docker_build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/node-app:${{ github.sha }} .
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/node-app:${{ github.sha }}
+
+  # Job 3: Deploy to Kubernetes
+  kubernetes_deploy:
+    runs-on: ubuntu-latest
+    needs: docker_build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v2
+        with:
+          version: 'latest'
+      - name: Configure kubectl for Docker Desktop
+        run: |
+          kubectl config use-context docker-desktop
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl set image deployment/node-app node-app=${{ secrets.DOCKER_USERNAME }}/node-app:${{ github.sha }} --record
+          kubectl rollout status deployment/node-app
+
+  # Job 4: Slack Notification for Deployment Success
+  notify_slack_success:
+    runs-on: ubuntu-latest
+    needs: kubernetes_deploy
+    if: success()
+    steps:
+      - name: Send Slack Notification (Success)
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment to Kubernetes was successful!"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Job 5: Slack Notification for Deployment Failure
+  notify_slack_failure:
+    runs-on: ubuntu-latest
+    needs: kubernetes_deploy
+    if: failure()
+    steps:
+      - name: Send Slack Notification (Failure)
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment to Kubernetes failed!"}' ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Book Nook</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="shortcut icon" href="https://raw.githubusercontent.com/sowmi1403/Project/main/book_logo.jpg.png" type="image/x-icon">
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <img src="https://raw.githubusercontent.com/sowmi1403/Project/main/book_logo.png" alt="Book Logo">
+    </div>
+    <nav class="navbar">
+      <a href="index.html">Home</a>
+      <a href="#">Catalog</a>
+      <a href="#">About Us</a>
+      <input type="text" placeholder="Find your love">
+    </nav>
+  </header>
+
+  <main class="content">
+    <div class="welcome-text">
+      <h2>Welcome to <span class="highlight">The Book Nook!</span></h2>
+      <p>Dive into a world of endless stories, knowledge, and imagination.</p>
+      <ul>
+        <li>Countless books at your fingertips.</li>
+        <li>Organized shelves for every genre.</li>
+        <li>Easy access anywhere, anytime.</li>
+      </ul>
+      <p>Start exploring your digital library today and discover the stories that inspire you!</p>
+      <div class="buttons">
+        <button onclick="openLoginModal()">Login</button>
+        <button onclick="openModal()">Sign up</button>
+      </div>
+    </div>
+    <div class="book-image">
+      <img src="https://raw.githubusercontent.com/sowmi1403/Project/main/book.jpg.jpg" alt="The Most Beautiful Book Places in the World">
+    </div>
+  </main>
+
+  <!-- Sign Up Modal -->
+  <div id="signUpModal" class="modal">
+    <div class="modal-content">
+      <h3>Sign Up</h3>
+      <form id="signUpForm">
+        <input type="email" id="email" placeholder="Email" required><br>
+        <input type="password" id="password" placeholder="Password" required><br>
+        <input type="password" id="retypePassword" placeholder="Retype Password" required><br>
+        <p id="errorMessage" style="color: red; display: none;">Passwords must match and meet all criteria.</p>
+        <div class="button-row">
+          <button type="submit" class="submit-button">Submit</button>
+          <button type="button" class="cancel-button" onclick="cancelSignUp()">Cancel</button>
+        </div>
+      </form>
+    </div>    
+  </div>
+  
+
+  <script>
+    // Open the sign-up modal
+    function openModal() {
+      document.getElementById("signUpModal").style.display = "flex";
+    }
+  
+    // Close the sign-up modal and return to the index page
+    function cancelSignUp() {
+        document.getElementById("signUpModal").style.display = "none";
+        window.location.href = "index.html"; // Replace with your index page's file path
+    }
+
+  
+    // Password validation function
+    function validatePassword(password) {
+      const passwordCriteria = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      return passwordCriteria.test(password);
+    }
+  
+    // Handle form submission
+    document.getElementById("signUpForm").addEventListener("submit", function (e) {
+      e.preventDefault(); // Prevent form submission
+  
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const retypePassword = document.getElementById("retypePassword").value;
+      const errorMessage = document.getElementById("errorMessage");
+  
+      // Check password criteria and matching
+      if (!validatePassword(password)) {
+        errorMessage.textContent = "Password must be at least 8 characters long and include a capital letter, a lowercase letter, a number, and a symbol.";
+        errorMessage.style.display = "block";
+        return;
+      }
+  
+      if (password !== retypePassword) {
+        errorMessage.textContent = "Passwords do not match.";
+        errorMessage.style.display = "block";
+        return;
+      }
+  
+      errorMessage.style.display = "none"; // Hide the error message if valid
+  
+      // Send email using the backend
+      fetch('http://localhost:3000/send-signup-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: email })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert('Signup successful! A confirmation email has been sent.');
+            document.getElementById("signUpModal").style.display = "none";
+          } else {
+            alert('Something went wrong. Please try again.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('There was an error sending the email.');
+        });
+    })
+    
+  </script>  
+</body>
+</html>
